@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>画像テキストオーバーレイツール</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+    }
+    .image-preview {
+      display: flex;
+      flex-wrap: wrap;
+    }
+    .image-preview img {
+      max-width: 200px;
+      margin: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>画像テキストオーバーレイツール</h1>
+  <form id="uploadForm">
+    <label for="file">スプレッドシートをアップロード:</label>
+    <input type="file" name="file" id="file" accept=".xlsx">
+    <br><br>
+    <input type="submit" value="アップロード">
+  </form>
+  <div class="image-preview" id="imagePreview"></div>
+
+  <script>
+    document.getElementById('uploadForm').addEventListener('submit', async function(event) {
+      event.preventDefault();
+
+      const file = document.getElementById('file').files[0];
+
+      if (!file) {
+        alert('スプレッドシートをアップロードしてください。');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+        const imageUrls = [
+          "https://example.com/image1.jpg",
+          "https://example.com/image2.jpg",
+          "https://example.com/image3.jpg",
+          "https://example.com/image4.jpg",
+          "https://example.com/image5.jpg",
+          "https://example.com/image6.jpg",
+          "https://example.com/image7.jpg",
+          "https://example.com/image8.jpg",
+          "https://example.com/image9.jpg"
+        ];
+
+        const imagePreview = document.getElementById('imagePreview');
+        imagePreview.innerHTML = '';
+
+        for (let i = 0; i < rows.length && i < imageUrls.length; i++) {
+          const url = imageUrls[i];
+          const text = rows[i][0];
+
+          try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const image = await createImageBitmap(blob);
+
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = image.width;
+            canvas.height = image.height;
+            ctx.drawImage(image, 0, 0);
+            ctx.font = '40px "Noto Sans JP", sans-serif';
+            ctx.fillStyle = 'white';
+            ctx.fillText(text, 50, 50);
+
+            const img = document.createElement('img');
+            img.src = canvas.toDataURL('image/jpeg');
+            imagePreview.appendChild(img);
+          } catch (error) {
+            console.error('画像の読み込みエラー:', error);
+          }
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    });
+  </script>
+</body>
+</html>
