@@ -5,10 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>画像テキストオーバーレイツール</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
   <style>
+    @font-face {
+      font-family: 'Uzura';
+      src: url('path/uzura.ttf') format('truetype');
+    }
+    @font-face {
+      font-family: 'Nikumaru';
+      src: url('path/07NikumaruFont.otf') format('opentype');
+    }
     body {
-      font-family: 'Noto Sans JP', sans-serif;
+      font-family: 'Uzura', sans-serif;
     }
     .image-preview {
       display: flex;
@@ -31,6 +38,45 @@
   <div class="image-preview" id="imagePreview"></div>
 
   <script>
+    function insertLineBreaks(text, maxLength) {
+  let result = '';
+  for (let i = 0; i < text.length; i += maxLength) {
+    result += text.slice(i, i + maxLength) + '<br>';
+  }
+  return result;
+}
+
+    function wrapText(context, text, x, y, maxWidth, lineHeight) {
+      const lines = text.split('<br>');  // Split text by <br> tags
+      let yOffset = y - ((lines.length - 1) / 2) * lineHeight;  // Adjust initial y position to center text vertically
+
+      lines.forEach((line, index) => {
+        let words = line.split(' ');
+        let currentLine = '';
+        const lineArr = [];
+
+        for (let n = 0; n < words.length; n++) {
+          let testLine = currentLine + words[n] + ' ';
+          let metrics = context.measureText(testLine);
+          let testWidth = metrics.width;
+          if (testWidth > maxWidth && n > 0) {
+            lineArr.push(currentLine);
+            currentLine = words[n] + ' ';
+          } else {
+            currentLine = testLine;
+          }
+        }
+        lineArr.push(currentLine);
+
+        lineArr.forEach((l) => {
+          context.fillText(l, x, yOffset);
+          yOffset += lineHeight;
+
+          
+        });
+      });
+    }
+
     document.getElementById('uploadForm').addEventListener('submit', async function(event) {
       event.preventDefault();
 
@@ -50,23 +96,27 @@
         const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
         const imageUrls = [
-          "https://example.com/image1.jpg",
-          "https://example.com/image2.jpg",
-          "https://example.com/image3.jpg",
-          "https://example.com/image4.jpg",
-          "https://example.com/image5.jpg",
-          "https://example.com/image6.jpg",
-          "https://example.com/image7.jpg",
-          "https://example.com/image8.jpg",
-          "https://example.com/image9.jpg"
+        "https://media.discordapp.net/attachments/1218419665324474419/1247025607162859540/1.png?ex=665e8699&is=665d3519&hm=9a5190d1ffbb19e52040e958067b020b90f19fed5ea54ea4f27c7be6ee7b1002&=&format=webp&quality=lossless&width=400&height=400",
+          "https://media.discordapp.net/attachments/1218419665324474419/1247025607439679518/2.png?ex=665e8699&is=665d3519&hm=a1c96c696187f2f7abd1498bb27a7324a0b7d3863ada9e9cceb086e17728497f&=&format=webp&quality=lossless&width=400&height=400",
+          "https://media.discordapp.net/attachments/1218419665324474419/1247025606806212638/8.png?ex=665e8699&is=665d3519&hm=438b234fc4c9498f7cbed729dcec185dec17952d20a8c19c65a090bce8a2cc36&=&format=webp&quality=lossless&width=400&height=400",
+          "https://media.discordapp.net/attachments/1218419665324474419/1247025606806212638/8.png?ex=665e8699&is=665d3519&hm=438b234fc4c9498f7cbed729dcec185dec17952d20a8c19c65a090bce8a2cc36&=&format=webp&quality=lossless&width=400&height=400",
+          "https://media.discordapp.net/attachments/1218419665324474419/1247025606806212638/8.png?ex=665e8699&is=665d3519&hm=438b234fc4c9498f7cbed729dcec185dec17952d20a8c19c65a090bce8a2cc36&=&format=webp&quality=lossless&width=400&height=400",
+          "https://media.discordapp.net/attachments/1218419665324474419/1247025606806212638/8.png?ex=665e8699&is=665d3519&hm=438b234fc4c9498f7cbed729dcec185dec17952d20a8c19c65a090bce8a2cc36&=&format=webp&quality=lossless&width=400&height=400",
+          "https://media.discordapp.net/attachments/1218419665324474419/1247025606806212638/8.png?ex=665e8699&is=665d3519&hm=438b234fc4c9498f7cbed729dcec185dec17952d20a8c19c65a090bce8a2cc36&=&format=webp&quality=lossless&width=400&height=400",
+          "https://media.discordapp.net/attachments/1218419665324474419/1247025606806212638/8.png?ex=665e8699&is=665d3519&hm=438b234fc4c9498f7cbed729dcec185dec17952d20a8c19c65a090bce8a2cc36&=&format=webp&quality=lossless&width=400&height=400",
+          "https://media.discordapp.net/attachments/1218419665324474419/1247025606286249984/9.png?ex=665e8699&is=665d3519&hm=c61460910b071fff2f6ad8bb8d40ddaeff147cfd3dedac9e2a72484bd8bac5f6&=&format=webp&quality=lossless&width=400&height=400"
         ];
 
         const imagePreview = document.getElementById('imagePreview');
         imagePreview.innerHTML = '';
 
         for (let i = 0; i < rows.length && i < imageUrls.length; i++) {
-          const url = imageUrls[i];
-          const text = rows[i][0];
+      const url = imageUrls[i];
+      let text = rows[i][0];
+      text = insertLineBreaks(text, 9); // 9文字ごとに改行を挿入
+
+
+       
 
           try {
             const response = await fetch(url);
@@ -78,9 +128,42 @@
             canvas.width = image.width;
             canvas.height = image.height;
             ctx.drawImage(image, 0, 0);
-            ctx.font = '40px "Noto Sans JP", sans-serif';
-            ctx.fillStyle = 'white';
-            ctx.fillText(text, 50, 50);
+
+           // フォントの設定
+if (i === 0) {
+  ctx.font = '40px "Nikumaru", sans-serif';
+} else if (i === 1 ) { // 2枚目と9枚目のテキストのサイズを半分に設定
+  ctx.font = '30px "Uzura", sans-serif';
+}else if (i === 8) { // 2枚目と9枚目のテキストのサイズを半分に設定
+  ctx.font = '20px "Uzura", sans-serif';
+} else {
+  ctx.font = '40px "Uzura", sans-serif';
+}
+            ctx.fillStyle = 'black';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            // Calculate the center position
+           const x = canvas.width / 2; 
+            if (i === 8 ) {y = canvas.height / 1.6; }
+            else if (i === 1 ) {y = canvas.height / 1.9; }
+            else {y = canvas.height / 2; }
+            const maxWidth = canvas.width * 0.8; // Max width is 80% of the canvas width
+            let lineHeight;  // Line height is equal to font size 
+
+            if (i === 1 ) { // 2枚目と9枚目の行間を10に設定
+
+  lineHeight = 35;
+            }
+            else if (i === 8 ) {
+              lineHeight = 20;
+            }
+ else {
+  lineHeight = 42; // デフォルトの行間はフォントサイズに等しい
+}
+
+            // Draw the text at the center position with wrapping
+            wrapText(ctx, text, x, y, maxWidth, lineHeight);
 
             const img = document.createElement('img');
             img.src = canvas.toDataURL('image/jpeg');
