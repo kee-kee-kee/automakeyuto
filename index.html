@@ -110,6 +110,28 @@
         const imagePreview = document.getElementById('imagePreview');
         imagePreview.innerHTML = '';
 
+// 画像とダウンロードボタンを表示する部分
+const imgContainer = document.createElement('div');
+imgContainer.style.margin = '20px';
+const img = document.createElement('img');
+img.src = canvas.toDataURL('image/jpeg');
+imgContainer.appendChild(img);
+
+const downloadButton = document.createElement('button');
+downloadButton.innerText = '画像をダウンロード';
+downloadButton.style.display = 'block';
+downloadButton.style.marginTop = '10px';
+downloadButton.onclick = function() {
+  const link = document.createElement('a');
+  link.href = img.src;
+  link.download = `image_${i + 1}.jpg`;
+  link.click();
+};
+
+imgContainer.appendChild(downloadButton);
+imagePreview.appendChild(imgContainer);
+
+
         for (let i = 0; i < rows.length && i < imageUrls.length; i++) {
       const url = imageUrls[i];
       let text = rows[i][0];
@@ -175,6 +197,7 @@ if (i === 0) {
       };
       reader.readAsArrayBuffer(file);
     });
+
   </script>
 </body>
 </html>
